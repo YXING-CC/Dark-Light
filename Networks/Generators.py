@@ -3,7 +3,6 @@ import torch.nn as nn
 from Networks.Transformer_Encoder import TransformerEncoderLayer, TransformerEncoder
 from Networks.Transformer_decoder import TransformerDecoderLayer, TransformerDecoder
 from Networks.FiLM import Model as Model_Film
-# from Networks.Autoformer import Model
 from Networks.Informer import Model
 from Networks.wavenet import TemporalConvNet
 
@@ -81,6 +80,8 @@ class dark_gen_recons_tcn(nn.Module):
         recons_out = self.linear2(recons_out)
 
         return recons_out
+
+
 class PositionalEncoder(torch.nn.Module):
     def __init__(self, d_model, max_seq_len=100):
         super().__init__()
@@ -116,14 +117,8 @@ class dark_gen_pred(nn.Module):
         self.encoder_layer = TransformerEncoderLayer(d_model=self.hid_dim, nhead=8, dropout=trans_dpt, batch_first='True')
         self.transformer_encoder = TransformerEncoder(self.encoder_layer, num_layers=num_layers * 2)
 
-        self.decoder_layer = TransformerDecoderLayer(d_model=self.hid_dim, nhead=8, dropout=trans_dpt, batch_first=True)
-        self.transformer_decoder = TransformerDecoder(self.decoder_layer, num_layers=num_layers)
-
         self.pe = PositionalEncoder(d_model=self.hid_dim)
         self.linear_emb = nn.Linear(feat_dim, self.hid_dim)
-
-        self.pe_targ = PositionalEncoder(d_model=self.hid_dim)
-        self.linear_emb_targ = nn.Linear(feat_dim, self.hid_dim)
 
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(p=0.3)
@@ -144,22 +139,7 @@ class dark_gen_pred(nn.Module):
         dec_out = self.decoder(dec_out)
         dec_out = dec_out.reshape(dec_out.size()[0], 50, self.hid_dim)
 
-        # dec_out = self.transformer_encoder(x)
-        #
-        # targ = self.linear_emb_targ(targ)
-        # targ = self.pe_targ(targ)
-        #
-        # dec_out = self.transformer_decoder(targ, enc_out, tgt_mask = self.mask)
-        # print('dec_out here', dec_out.size())
-
         return dec_out
-        # return output
-
-    def generate_square_subsequent_mask(self, sz: int, device='cpu'):
-        r"""Generate a square mask for the sequence. The masked positions are filled with float('-inf').
-            Unmasked positions are filled with float(0.0).
-        """
-        return torch.triu(torch.full((sz, sz), float('-inf'),  device=device), diagonal=1)
 
 class dark_gen_recons(nn.Module):
     def __init__(self, feat_dim=4, device=None):
@@ -171,7 +151,7 @@ class dark_gen_recons(nn.Module):
 
         self.encoder_layer_recons = TransformerEncoderLayer(d_model=hid_dim, nhead=8, dropout=trans_dpt, batch_first='True')
         self.transformer_encoder_recons = TransformerEncoder(self.encoder_layer_recons, num_layers=num_layers * 2)
-        #
+        
         self.pe = PositionalEncoder(d_model=hid_dim)
         self.linear_emb = nn.Linear(feat_dim, hid_dim)
 
@@ -182,50 +162,10 @@ class dark_gen_recons(nn.Module):
         recons_out = self.transformer_encoder_recons(x)
 
         return recons_out
+        
 
-
-########################Film_start#############################
-class dark_gen_pred_Film(nn.Module):
-    def __init__(self, args, feat_dim=4, device=None):
-        super(dark_gen_pred_Film, self).__init__()
-        hid_dim = 256
-        feat_dim1 = 32
-        self.linear_emb = nn.Linear(feat_dim, feat_dim1)
-
-        self.Film = Model_Film(args)
-        self.linear = nn.Linear(feat_dim, hid_dim)
-
-    def forward(self, x, targ, recons_out):
-        dec_out, _ = self.Film((x))
-        dec_out = self.linear(dec_out)
-
-        return dec_out
-
-
-class dark_gen_recons_Film(nn.Module):
-    def __init__(self, args, feat_dim=4, device=None):
-        super(dark_gen_recons_Film, self).__init__()
-        hid_dim = 256
-        feat_dim1 = 32
-
-        self.linear_emb = nn.Linear(feat_dim, feat_dim1)
-
-        self.Film = Model_Film(args)
-        self.linear = nn.Linear(feat_dim, hid_dim)
-
-    def forward(self, x):
-        recons_out, _ = self.Film((x))
-        # print('recons_out here', recons_out.size())
-        recons_out = self.linear(recons_out)
-
-        return recons_out
-
-########################Film_end#############################
-
-
-
-########################Informer_start#############################
-class dark_gen_pred_autoformer(nn.Module):
+########################Informer#############################
+class dark_gen_pred_informer(nn.Module):
     def __init__(self, args, feat_dim=4, device=None):
         super(dark_gen_pred_autoformer, self).__init__()
         hid_dim = 256
@@ -242,7 +182,7 @@ class dark_gen_pred_autoformer(nn.Module):
         return dec_out
 
 
-class dark_gen_recons_autoformer(nn.Module):
+class dark_gen_recons_informer(nn.Module):
     def __init__(self, args, feat_dim=4, device=None):
         super(dark_gen_recons_autoformer, self).__init__()
         hid_dim = 256
@@ -312,22 +252,3 @@ if __name__ == "__main__":
     net = dark_gen_pred()
     net_re = dark_gen_recons()
 
-    # pred_head = pred_head(num_fault=5)
-    # recons_out = net_re.forward(inputs)
-    # dec_out = net.forward(inputs, targ, recons_out)
-    # print('dec_out.size()', dec_out.size(), 'recons_out.size()', recons_out.size())
-    # reg_output, recons_output, cls = pred_head(dec_out, recons_out)
-    # print('reg.size:', reg_output.size(),  'recons_output.size:', recons_output.size(), 'cls.size', cls[1].size())
-
-###################Autoformer##########################################
-    Film_recons = dark_gen_recons_autoformer(Configs_recons_autoformer).to(device)
-    recons_out = Film_recons(inputs.to(device), inputs.to(device), inputs.to(device), inputs.to(device))
-
-    Film = dark_gen_pred_autoformer(Configs_pred_autoformer).to(device)
-    dec_out = Film(inputs.to(device), inputs.to(device), targ.to(device), targ.to(device))
-
-    pred_head = pred_head(num_fault=5).to(device)
-    reg_output, recons_output, cls = pred_head(dec_out, recons_out)
-
-    print('Film output', dec_out.size(), 'recons_out Film', recons_out.size())
-    print('reg.size:', reg_output.size(),  'recons_output.size:', recons_output.size(), 'cls.size', cls[1].size())
