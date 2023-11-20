@@ -34,20 +34,14 @@ class TF_FD_14dim(nn.Module):
         super(TF_FD_14dim, self).__init__()
         feat_dim = 4
         hid_dim = 256
-        num_layers = 3
+        num_layers = 6
         self.fault_type = num_fault
 
         self.encoder_layer = TransformerEncoderLayer(d_model=hid_dim, nhead=8, batch_first='True')
-        self.transformer_encoder = TransformerEncoder(self.encoder_layer, num_layers=num_layers*2)
-
-        self.decoder_layer = TransformerDecoderLayer(d_model=hid_dim, nhead=8, batch_first=True)
-        self.transformer_decoder = TransformerDecoder(self.decoder_layer, num_layers=num_layers)
-
+        self.transformer_encoder = TransformerEncoder(self.encoder_layer, num_layers=num_layers*1)
+        
         self.pe = PositionalEncoder(d_model=hid_dim)
         self.linear_emb = nn.Linear(feat_dim, hid_dim)
-
-        self.pe_targ = PositionalEncoder(d_model=hid_dim)
-        self.linear_emb_targ = nn.Linear(feat_dim, hid_dim)
 
         self.relu = nn.ReLU()
         self.linear_regress = nn.Linear(hid_dim, feat_dim)
@@ -59,17 +53,9 @@ class TF_FD_14dim(nn.Module):
         self.linear_sig3 = nn.Linear(hid_dim*50, self.fault_type)
         self.linear_sig4 = nn.Linear(hid_dim*50, self.fault_type)
 
-        self.mask = self.generate_square_subsequent_mask(50, device)
-
         self.sftmax = nn.Softmax()
-
-        self.layernorm_recons = nn.LayerNorm(hid_dim, eps=1e-05)
-        self.layernorm_pred = nn.LayerNorm(hid_dim, eps=1e-05)
-
-        self.recons_multiattn = nn.MultiheadAttention(hid_dim, 8)
-        self.pred_multiattn = nn.MultiheadAttention(hid_dim, 8)
-        self.decoder = nn.Linear(100*hid_dim, 50*hid_dim)
-
+        self.m = nn.Conv1d(100, 50, 3, stride=2)
+        self.n = nn.Linear(127,256)
 
     def forward(self, x, targ, pred_feat, recons_feat):
         # print('input_t', x.size(), targ.size())
@@ -82,20 +68,8 @@ class TF_FD_14dim(nn.Module):
         # pred_feat = (pred_feat + self.pred_multiattn(pred_feat, pred_feat, pred_feat)[0])
 
         enc_out = enc_out + recons_feat
+        dec_out = self.n(self.m(enc_out))
 
-        dec_out = enc_out.reshape(enc_out.size()[0], -1)
-        dec_out = self.decoder(dec_out)
-        dec_out = dec_out.reshape(dec_out.size()[0], 50, 256)
-        #
-        # targ = self.linear_emb_targ(targ)
-        # # print('targ.size',targ.size())
-        # targ = self.pe_targ(targ)
-        #
-        # targ = targ
-        #
-        # dec_out = self.transformer_decoder(targ, enc_out, tgt_mask=self.mask)
-        #
-        # # print('dec_out.size()', dec_out.size())
         dec_out = dec_out + pred_feat
 
         reg_output = self.linear_regress(self.dropout(dec_out))
@@ -113,12 +87,6 @@ class TF_FD_14dim(nn.Module):
         return reg_output, [fault_sig_1, fault_sig_2, fault_sig_3, fault_sig_4]
         # return output
 
-    def generate_square_subsequent_mask(self, sz: int, device='cpu'):
-        r"""Generate a square mask for the sequence. The masked positions are filled with float('-inf').
-            Unmasked positions are filled with float(0.0).
-        """
-        return torch.triu(torch.full((sz, sz), float('-inf'),  device=device), diagonal=1)
-
 
 if __name__ == "__main__":
     inputs = torch.rand(32, 100, 4)
@@ -127,8 +95,19 @@ if __name__ == "__main__":
     recons = torch.rand(32, 100, 256)
     pred = torch.rand(32, 50, 256)
 
-    net = TF_FD_14dim(num_fault=5)
+    net = TF_FD_14dim(num_fault=9)
     reg, cls = net.forward(inputs, targ, pred, recons)
-
     print('reg.size:', reg.size(), 'cls.size', cls[1].size())
+
+    model = net
+    param_size = 0
+    for param in model.parameters():
+        param_size += param.nelement() * param.element_size()
+    buffer_size = 0
+    for buffer in model.buffers():
+        buffer_size += buffer.nelement() * buffer.element_size()
+
+    size_all_mb = (param_size ) / 1024 ** 2
+    print('model size: {:.3f}MB'.format(size_all_mb))
+
 
