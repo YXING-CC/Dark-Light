@@ -32,9 +32,6 @@ testnormal = (testdata' - mu) ./ sig;
 trainnormal = trainnormal';
 testnormal = testnormal';
 
-% save normalizeddata.mat trainnormal testnormal
-
-
 %%
 
 cylinder_ind = [1,2,3,4];
