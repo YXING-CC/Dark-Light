@@ -325,10 +325,6 @@ end
 
 len_cyl_test = length(cylind_test_ft1);
 
-% data1 = [];
-% data2 = [];
-% data3 = [];
-% data4 = [];
 
 for i = 1:len_cyl_test
     data1 = cylind_test_ft1{i};
@@ -499,10 +495,6 @@ end
 
 len_cyl_test = length(cylind_test_ft3);
 
-% data1 = [];
-% data2 = [];
-% data3 = [];
-% data4 = [];
 
 for i = 1:len_cyl_test
     data1 = cylind_test_ft3{i};
@@ -585,11 +577,6 @@ for i = 1:len_cyl
 end
 
 len_cyl_test = length(cylind_test_ft1);
-
-% data1 = [];
-% data2 = [];
-% data3 = [];
-% data4 = [];
 
 for i = 1:len_cyl_test
     data1 = cylind_test_ft4{i};
