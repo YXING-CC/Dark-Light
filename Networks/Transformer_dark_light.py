@@ -62,14 +62,10 @@ class light_net_LSTM(nn.Module):
         dec_out = dec_out.reshape(dec_size[0], -1)
         dec_out = self.linear_pred_red(dec_out)
         dec_out = dec_out.reshape(dec_size[0], 50, 256)
-        # print('LSTM dec', dec_out.size(), 'Recons', recons_out.size())
-
         reg_output = self.linear_regress(self.dropout(dec_out))
 
         dec_size = dec_out.size()
         dec_out = dec_out.reshape(dec_size[0], -1)
-
-        # print('dec_out.size()', dec_out.size())
 
         fault_sig_1 = self.linear_sig1(dec_out)
         fault_sig_2 = self.linear_sig2(dec_out)
@@ -89,14 +85,8 @@ class TF_FD_14dim(nn.Module):
         self.encoder_layer = TransformerEncoderLayer(d_model=hid_dim, nhead=8, batch_first='True')
         self.transformer_encoder = TransformerEncoder(self.encoder_layer, num_layers=num_layers*2)
 
-        self.decoder_layer = TransformerDecoderLayer(d_model=hid_dim, nhead=8, batch_first=True)
-        self.transformer_decoder = TransformerDecoder(self.decoder_layer, num_layers=num_layers)
-
         self.pe = PositionalEncoder(d_model=hid_dim)
         self.linear_emb = nn.Linear(feat_dim, hid_dim)
-
-        self.pe_targ = PositionalEncoder(d_model=hid_dim)
-        self.linear_emb_targ = nn.Linear(feat_dim, hid_dim)
 
         self.relu = nn.ReLU()
 
@@ -124,16 +114,7 @@ class TF_FD_14dim(nn.Module):
 
         dec_out = enc_out.reshape(enc_out.size()[0], -1)
         dec_out = self.decoder(dec_out)
-        # dec_out = dec_out.reshape(dec_out.size()[0], 50, 256)
         dec_out = dec_out.reshape(dec_out.size()[0], 50, 256)
-
-        # targ = self.linear_emb_targ(targ)
-        # # print('targ.size',targ.size())
-        # targ = self.pe_targ(targ)
-
-        # dec_out = self.transformer_decoder(targ, enc_out, tgt_mask=self.mask)
-
-        # print('dec_out.size()', dec_out.size())
 
         reg_output = self.linear_regress(self.dropout(dec_out)).squeeze()
 
