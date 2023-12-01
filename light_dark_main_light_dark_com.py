@@ -313,25 +313,6 @@ def train_model(modelType=modelType, save_dir=save_dir, num_classes=num_classes,
 
             print('Testing epoch_loss', epoch_loss_cylinder_reg, 'testing epoch_acc_cylinder', epoch_acc_cylinder)
 
-            if epoch_loss_cylinder_reg < min_test_reg:
-                min_test_reg = epoch_loss_cylinder_reg
-                max_test_cla = epoch_acc_cylinder
-                epoch_store = epoch
-
-                # print('test_pred.size:', test_pred.size(), 'test_pred.size:', test_pred.size())
-
-                test_pred_store = test_pred[1:,:,:].numpy()
-                test_targ_store = test_targ[1:,:,:].numpy()
-
-                # print('test_pred_store.size:', test_pred_store.shape, 'test_targ_store.size:', test_targ_store.shape)
-
-                wrtieresults_classification(running_pred_intent_c1, running_pred_label_c1, 'c1')
-                wrtieresults_classification(running_pred_intent_c2, running_pred_label_c2, 'c2')
-                wrtieresults_classification(running_pred_intent_c3, running_pred_label_c3, 'c3')
-                wrtieresults_classification(running_pred_intent_c4, running_pred_label_c4, 'c4')
-
-                wrtieresults_regression(test_pred_store, test_targ_store)
-
             writer.add_scalar('data/testing_epoch_loss', epoch_loss, epoch)
             writer.add_scalar('data/testing_regression_loss', epoch_loss_cylinder_reg, epoch)
             writer.add_scalar('data/testing_classification_accuracy', epoch_acc_cylinder, epoch)
