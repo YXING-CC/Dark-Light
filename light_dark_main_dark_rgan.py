@@ -691,18 +691,6 @@ def train_model(modelType=modelType, save_dir=save_dir, num_classes=num_classes,
                 test_recons_pred_store = test_recons_pred[1:,:,:].numpy()
                 test_recons_targ_store = test_recons_targ[1:,:,:].numpy()
 
-                if epoch > 300:
-                    torch.save({
-                        'epoch': epoch + 1,
-                        'dark_model_pred_state_dict': netG_pred.state_dict(),
-                        'dark_model_recons_state_dict': netG_recons.state_dict(),
-                        'optimizer_G_pred': optimizer_G_pred.state_dict(),
-                        'optimizer_G_recons': optimizer_G_recons.state_dict(),
-                    }, os.path.join(log_dir + '.pth'))
-                    print("Save model at {}\n".format(os.path.join(log_dir + '_epoch-' + str(epoch) + '.pth')))
-                    wrtieresults_regression(test_recons_pred_store, test_recons_targ_store)
-
-
             stop_time = timeit.default_timer()
             print("Execution time Test: " + str(stop_time - start_time) + "\n")
 
