@@ -27,7 +27,7 @@ def extract_cylinder_mat_data(cylinder_data):
 class vehicle_state_dataset(Dataset):
     def __init__(self, split='train'):
         print('init')
-        data_folder = 'E:\Projects\Brake\District\Matlab'
+        data_folder = 'path to the .mat file'
 
         mat_pth = os.path.join(data_folder, 'light-dark-clinder.mat')
         cylinder_data = scio.loadmat(mat_pth)
