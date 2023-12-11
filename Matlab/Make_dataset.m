@@ -1,5 +1,5 @@
 %% Light Train
-falut4_ratio = 0.1;
+falut4_ratio = 0.1;        %controls how many fault signals to the testing set
 
 ind_train = randperm(length(cylind_train_targ_ft4));
 ind_train = ind_train(1:ceil(length(ind_train)*falut4_ratio));
