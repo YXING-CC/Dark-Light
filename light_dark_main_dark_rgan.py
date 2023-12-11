@@ -679,44 +679,7 @@ def train_model(modelType=modelType, save_dir=save_dir, num_classes=num_classes,
             writer.add_scalar('data/testing_classification_accuracy', epoch_acc_cylinder, epoch)
             writer.add_scalar('data/testing_reconstruction_loss', epoch_loss_cylinder_recons, epoch)
 
-            if epoch_loss_cylinder_reg < min_test_reg:
-                min_test_reg = epoch_loss_cylinder_reg
-                min_test_recons = epoch_loss_cylinder_recons
-                max_test_cla = epoch_acc_cylinder
-                epoch_store = epoch
-
-                test_pred_store = test_pred[1:,:,:].numpy()
-                test_targ_store = test_targ[1:,:,:].numpy()
-
-                test_recons_pred_store = test_recons_pred[1:,:,:].numpy()
-                test_recons_targ_store = test_recons_targ[1:,:,:].numpy()
-
-            stop_time = timeit.default_timer()
-            print("Execution time Test: " + str(stop_time - start_time) + "\n")
-
-            print('Minimum testing pred loss:', min_test_reg, 'Minimum testing recons loss:',
-                  min_test_recons,'maximum testing acc classification:', max_test_cla, 'epoch_store:', epoch_store)
-
     print('test_targ.size',test_targ_store.shape, 'test_pred.size',test_pred_store.shape)
-
-    ext = 15
-    plt.figure(1)
-    for i in range (9):
-        plt.subplot(3, 3, i+1)
-        plt.plot(test_pred_store[(i+1)*120+ext, :, 1], 'b')
-        plt.plot(test_targ_store[(i+1)*120+ext, :, 1], 'r')
-        plt.legend(['pred', 'targ'])
-        plt.grid()
-    plt.show()
-
-    plt.figure(2)
-    for i in range (9):
-        plt.subplot(3, 3, i+1)
-        plt.plot(test_recons_pred_store[(i+1)*120+ext, :, 1], 'b')
-        plt.plot(test_recons_targ_store[(i+1)*120+ext, :, 1], 'r')
-        plt.legend(['recons', 'targ'])
-        plt.grid()
-    plt.show()
 
     writer.close()
 
